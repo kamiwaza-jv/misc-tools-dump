@@ -11,7 +11,8 @@ set -e  # Exit on any error
 VLLM_DIR="kz-gaudi-imagemaker"
 AGENTIC_DIR="qwen-agentic-server" 
 PICARD_DIR="picard"
-PICARD_CONFIG="config/picard_abridged_standard.yaml"
+#PICARD_CONFIG="config/picard_abridged_standard.yaml"
+PICARD_CONFIG="config/debug.yaml"
 AGENTIC_ENDPOINT="http://localhost:5002/api/chat"
 VLLM_PORT=8969
 
@@ -100,9 +101,15 @@ test_model() {
     log_info "Step 1: Launching VLLM server with model $model..."
     cd "$VLLM_DIR"
     
+    # Debug: Show the exact command being executed
+    log_info "DEBUG: About to execute: ./detached_launch.sh \"$model\""
+    log_info "DEBUG: Current directory: $(pwd)"
+    log_info "DEBUG: detached_launch.sh exists: $(ls -la detached_launch.sh 2>/dev/null || echo 'FILE NOT FOUND')"
+    
     # Launch in background and capture PID
-    ./test_launch.sh "$model" &
+    ./detached_launch.sh "$model" &
     local vllm_pid=$!
+    log_info "DEBUG: Started VLLM process with PID: $vllm_pid"
     
     cd - > /dev/null
     
@@ -114,13 +121,19 @@ test_model() {
         return 1
     fi
     
-    # Step 2: Launch agentic server with the model
+    # Step 2: Launch agentic server with model $model..."
     log_info "Step 2: Launching agentic server with model $model..."
     cd "$AGENTIC_DIR"
+    
+    # Debug: Show the exact command being executed
+    log_info "DEBUG: About to execute: ./start.sh \"$model\""
+    log_info "DEBUG: Current directory: $(pwd)"
+    log_info "DEBUG: start.sh exists: $(ls -la start.sh 2>/dev/null || echo 'FILE NOT FOUND')"
     
     # Launch in background
     ./start.sh "$model" &
     local agentic_pid=$!
+    log_info "DEBUG: Started agentic server process with PID: $agentic_pid"
     
     cd - > /dev/null
     
